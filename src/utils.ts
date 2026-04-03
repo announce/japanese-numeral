@@ -53,6 +53,15 @@ export function kan2n(japanese: string) {
   }
 
   let kanji = zen2han(japanese)
+
+  // Allow decimal coefficients (e.g. "8.5" from "8.5万") so that
+  // kan2n returns 8.5 and the caller can multiply by the unit value.
+  // Previously this fell through to the kanji-character loop, which
+  // has no mapping for "." and silently produced an incorrect result.
+  if (kanji.match(/^[0-9]+\.[0-9]+$/)) {
+    return Number(kanji)
+  }
+
   let number = 0
   for (const key in smallNumbers) {
     const reg = new RegExp(`(.*)${key}`)

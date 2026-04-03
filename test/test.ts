@@ -105,6 +105,35 @@ describe('Tests for japaneseNumeral.', () => {
   it('`１２３` should be converted to `123`', () => {
     assert.deepEqual(kanji2number('１２３'), 123)
   })
+
+  // Issue #20: decimal Arabic-kanji numerals (e.g. 8.5万円, 25.24億円)
+  describe('findKanjiNumbers should recognize decimal Arabic-kanji numerals as single tokens', () => {
+    it('decimal + 万: common rent price like 8.5万円', () => {
+      assert.deepEqual(findKanjiNumbers('家賃は8.5万円です。'), ['8.5万'])
+    })
+
+    it('decimal + 億: property price like 25.24億円', () => {
+      assert.deepEqual(findKanjiNumbers('売上は25.24億円でした。'), ['25.24億'])
+    })
+
+    it('should handle precision in numbers like 1.20兆円', () => {
+      assert.deepEqual(findKanjiNumbers('予算は1.20兆円です。'), ['1.20兆'])
+    })
+  })
+
+  describe('kanji2number should convert decimal Arabic-kanji numerals', () => {
+    it('decimal + 万: 8.5万 = 85,000', () => {
+      assert.deepEqual(kanji2number('8.5万'), 85000)
+    })
+
+    it('decimal + 億: 25.24億 = 2,524,000,000', () => {
+      assert.deepEqual(kanji2number('25.24億'), 2524000000)
+    })
+
+    it('precision in numbers', () => {
+      assert.deepEqual(kanji2number('1.20兆'), 1200000000000)
+    })
+  })
 });
 
 // https://github.com/geolonia/normalize-japanese-addresses/issues/94
