@@ -1,10 +1,21 @@
 {
-  "name": "@geolonia/japanese-numeral",
-  "version": "1.0.2",
+  "name": "@bukkentime/japanese-numeral",
+  "version": "1.1.0-rc.1",
   "description": "Converts Japanese Kanji numeral to number.",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "npm test && npm run build",
     "test": "mocha -r ts-node/register test/*.ts",
     "test:watch": "npm test -- --watch --watch-files src/**/*.ts --watch-files test/**/*.ts"
   },
