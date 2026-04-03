@@ -131,6 +131,16 @@ describe('Tests for japaneseNumeral.', () => {
     it('should not capture decimal as part of token before small units like 千/百/十', () => {
       assert.deepEqual(findKanjiNumbers('8.5千'), [])
     })
+
+    it('should still find kanji numerals that immediately follow an Arabic digit', () => {
+      assert.deepEqual(findKanjiNumbers('第2二十条'), ['二十'])
+      assert.deepEqual(findKanjiNumbers('3三'), ['三'])
+    })
+
+    it('should not emit malformed decimal coefficients mixed with 千/百/十 before large units', () => {
+      assert.deepEqual(findKanjiNumbers('1千2.3億'), ['1千2'])
+      assert.deepEqual(findKanjiNumbers('1百2.3万'), ['1百2'])
+    })
   })
 
   describe('kanji2number should convert decimal Arabic-kanji numerals', () => {

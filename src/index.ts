@@ -83,21 +83,29 @@ export function number2kanji(num: number) {
 
 export function findKanjiNumbers(text: string) {
   const num = '([0-9０-９]*)|([〇一二三四五六七八九壱壹弐弍貳貮参參肆伍陸漆捌玖]*)'
-  const decimalNum = '([0-9０-９]+[.．][0-9０-９]+|[0-9０-９]*)|([〇一二三四五六七八九壱壹弐弍貳貮参參肆伍陸漆捌玖]*)'
+  const decimalArabicNum = '[0-9０-９]+[.．][0-9０-９]+'
   // Decimal coefficients are only valid before large units (万/億/兆), not before 千/百/十
   const basePattern = `((${num})(千|阡|仟))?((${num})(百|陌|佰))?((${num})(十|拾))?(${num})?`
-  const decimalBasePattern = `((${num})(千|阡|仟))?((${num})(百|陌|佰))?((${num})(十|拾))?(${decimalNum})?`
-  const pattern = `(?<![0-9０-９.．])(((${decimalBasePattern}兆)?(${decimalBasePattern}億)?(${decimalBasePattern}(万|萬))?${basePattern}))`
+  const largeUnitPattern = `((${decimalArabicNum})|(${basePattern}))`
+  const pattern = `(((${largeUnitPattern}兆)?(${largeUnitPattern}億)?(${largeUnitPattern}(万|萬))?${basePattern}))`
   const regex = new RegExp(pattern, 'g')
-  const matches = Array.from(text.matchAll(regex), (match) => match[1])
+  const matches = Array.from(text.matchAll(regex), (match) => ({
+    index: match.index || 0,
+    value: match[1],
+  }))
   if (matches.length) {
-    return matches.filter((item) => {
-      if ((! item.match(/^[0-9０-９.．]+$/)) && (item.length && '兆' !== item && '億' !== item && '万' !== item && '萬' !== item)) {
+    return matches.filter((match) => {
+      const previous = match.index > 0 ? text[match.index - 1] : ''
+      if ((previous === '.' || previous === '．') || ((previous >= '0' && previous <= '9') || (previous >= '０' && previous <= '９')) && match.value.match(/^[0-9０-９]/)) {
+        return false
+      }
+
+      if ((! match.value.match(/^[0-9０-９.．]+$/)) && (match.value.length && '兆' !== match.value && '億' !== match.value && '万' !== match.value && '萬' !== match.value)) {
         return true
       } else {
         return false
       }
-    })
+    }).map((match) => match.value)
   } else {
     return []
   }
