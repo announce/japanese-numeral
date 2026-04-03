@@ -17,6 +17,20 @@ export type SplitLargeNumberParts = {
 export const largeNumbers: NumHash = { '兆': 1000000000000, '億': 100000000, '万': 10000 }
 export const smallNumbers: NumHash = { '千': 1000, '百': 100, '十': 10 }
 
+function parseDecimalValue(japanese: string) {
+  const normalized = zen2han(japanese)
+  const match = normalized.match(/^([0-9]+)\.([0-9]+)$/)
+
+  if (!match) {
+    return null
+  }
+
+  return {
+    digits: Number(`${match[1]}${match[2]}`),
+    scale: 10 ** match[2].length,
+  }
+}
+
 export function normalize(japanese: string) {
   for (const key in oldJapaneseNumerics) {
     const reg = new RegExp(key, 'g')
@@ -81,6 +95,18 @@ export function kan2n(japanese: string) {
   // has no mapping for "." and silently produced an incorrect result.
   if (kanji.match(/^[0-9]+\.[0-9]+$/)) {
     return Number(kanji)
+  }
+
+  const decimalUnitMatch = kanji.match(/^([0-9]+\.[0-9]+)(千|百|十)$/)
+  if (decimalUnitMatch) {
+    const decimal = parseDecimalValue(decimalUnitMatch[1])
+    const unit = smallNumbers[decimalUnitMatch[2]]
+
+    if (!decimal || unit % decimal.scale !== 0) {
+      return NaN
+    }
+
+    return decimal.digits * (unit / decimal.scale)
   }
 
   let number = 0

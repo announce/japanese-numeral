@@ -128,22 +128,30 @@ describe('Tests for japaneseNumeral.', () => {
       assert.deepEqual(findKanjiNumbers('家賃は８．５万円です。'), ['８．５万'])
     })
 
-    it('should not capture decimal as part of token before small units like 千/百/十', () => {
-      assert.deepEqual(findKanjiNumbers('8.5千'), [])
+    it('should extract decimal rent and fee amounts written with small units', () => {
+      assert.deepEqual(findKanjiNumbers('家賃は8.5千円です。'), ['8.5千'])
+      assert.deepEqual(findKanjiNumbers('手数料は8.5百円です。'), ['8.5百'])
+      assert.deepEqual(findKanjiNumbers('割引は8.5十円です。'), ['8.5十'])
     })
 
-    it('should still find kanji numerals that immediately follow an Arabic digit', () => {
+    it('should still find kanji numerals in text like article numbers and mixed labels', () => {
       assert.deepEqual(findKanjiNumbers('第2二十条'), ['二十'])
       assert.deepEqual(findKanjiNumbers('3三'), ['三'])
     })
 
-    it('should not emit malformed decimal coefficients mixed with 千/百/十 before large units', () => {
+    it('should stop before broken decimal-large-unit strings from OCR or scraped text', () => {
       assert.deepEqual(findKanjiNumbers('1千2.3億'), ['1千2'])
       assert.deepEqual(findKanjiNumbers('1百2.3万'), ['1百2'])
     })
   })
 
   describe('kanji2number should convert decimal Arabic-kanji numerals', () => {
+    it('decimal + 千/百/十: 8.5千 = 8,500, 8.5百 = 850, 8.5十 = 85', () => {
+      assert.deepEqual(kanji2number('8.5千'), 8500)
+      assert.deepEqual(kanji2number('8.5百'), 850)
+      assert.deepEqual(kanji2number('8.5十'), 85)
+    })
+
     it('decimal + 万: 8.5万 = 85,000', () => {
       assert.deepEqual(kanji2number('8.5万'), 85000)
     })
@@ -178,6 +186,10 @@ describe('Tests for japaneseNumeral.', () => {
 
     it('should reject large-coefficient non-integral results like 10000000.00000001万', () => {
       assert.throws(() => kanji2number('10000000.00000001万'), TypeError)
+    })
+
+    it('should still reject mixed decimal-small-unit hybrids like 1.2千3百', () => {
+      assert.throws(() => kanji2number('1.2千3百'), TypeError)
     })
   })
 });

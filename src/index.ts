@@ -84,10 +84,12 @@ export function number2kanji(num: number) {
 export function findKanjiNumbers(text: string) {
   const num = '([0-9０-９]*)|([〇一二三四五六七八九壱壹弐弍貳貮参參肆伍陸漆捌玖]*)'
   const decimalArabicNum = '[0-9０-９]+[.．][0-9０-９]+'
-  // Decimal coefficients are only valid before large units (万/億/兆), not before 千/百/十
+  const decimalSmallUnitPattern = `(${decimalArabicNum})(千|阡|仟|百|陌|佰|十|拾)`
+  // Decimal coefficients are valid as standalone Arabic-decimal prefixes before a single unit.
   const basePattern = `((${num})(千|阡|仟))?((${num})(百|陌|佰))?((${num})(十|拾))?(${num})?`
   const largeUnitPattern = `((${decimalArabicNum})|(${basePattern}))`
-  const pattern = `(((${largeUnitPattern}兆)?(${largeUnitPattern}億)?(${largeUnitPattern}(万|萬))?${basePattern}))`
+  const trailingPattern = `((${decimalSmallUnitPattern})|(${basePattern}))`
+  const pattern = `(((${largeUnitPattern}兆)?(${largeUnitPattern}億)?(${largeUnitPattern}(万|萬))?${trailingPattern}))`
   const regex = new RegExp(pattern, 'g')
   const matches = Array.from(text.matchAll(regex), (match) => ({
     index: match.index || 0,
