@@ -5,6 +5,15 @@ type NumHash = {
   [key: string]: number;
 }
 
+type StringHash = {
+  [key: string]: string;
+}
+
+export type SplitLargeNumberParts = {
+  numbers: NumHash;
+  raw: StringHash;
+}
+
 export const largeNumbers: NumHash = { '兆': 1000000000000, '億': 100000000, '万': 10000 }
 export const smallNumbers: NumHash = { '千': 1000, '百': 100, '十': 10 }
 
@@ -20,26 +29,38 @@ export function normalize(japanese: string) {
  * 漢数字を兆、億、万単位に分割する
  */
 export function splitLargeNumber(japanese: string) {
+  return splitLargeNumberParts(japanese).numbers
+}
+
+/**
+ * 漢数字を兆、億、万単位に分割し、各係数の生文字列も返す
+ */
+export function splitLargeNumberParts(japanese: string): SplitLargeNumberParts {
   let kanji = japanese
   const numbers:NumHash = {}
+  const raw:StringHash = {}
   for (const key in largeNumbers) {
     const reg = new RegExp(`(.+)${key}`)
     const match = kanji.match(reg)
     if (match) {
+      raw[key] = match[1]
       numbers[key] = kan2n(match[1])
       kanji = kanji.replace(match[0], '')
     } else {
+      raw[key] = ''
       numbers[key] = 0
     }
   }
 
   if (kanji) {
+    raw['千'] = kanji
     numbers['千'] = kan2n(kanji)
   } else {
+    raw['千'] = ''
     numbers['千'] = 0
   }
 
-  return numbers
+  return { numbers, raw }
 }
 
 /**
@@ -134,5 +155,5 @@ export function n2kan(num: number) {
 export function zen2han(str: string) {
   return str.replace(/[０-９]/g, (s) => {
       return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
-  });
+  }).replace(/．/g, '.');
 }

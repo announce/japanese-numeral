@@ -119,6 +119,18 @@ describe('Tests for japaneseNumeral.', () => {
     it('should handle precision in numbers like 1.20兆円', () => {
       assert.deepEqual(findKanjiNumbers('予算は1.20兆円です。'), ['1.20兆'])
     })
+
+    it('should not extract standalone decimals without kanji units', () => {
+      assert.deepEqual(findKanjiNumbers('値段は8.5です'), [])
+    })
+
+    it('full-width decimal: ８．５万 should be found as a single token', () => {
+      assert.deepEqual(findKanjiNumbers('家賃は８．５万円です。'), ['８．５万'])
+    })
+
+    it('should not capture decimal as part of token before small units like 千/百/十', () => {
+      assert.deepEqual(findKanjiNumbers('8.5千'), [])
+    })
   })
 
   describe('kanji2number should convert decimal Arabic-kanji numerals', () => {
@@ -132,6 +144,30 @@ describe('Tests for japaneseNumeral.', () => {
 
     it('precision in numbers', () => {
       assert.deepEqual(kanji2number('1.20兆'), 1200000000000)
+    })
+
+    it('should not suffer from floating-point drift: 0.29億 = 29,000,000', () => {
+      assert.deepEqual(kanji2number('0.29億'), 29000000)
+    })
+
+    it('full-width decimal: ８．５万 = 85,000', () => {
+      assert.deepEqual(kanji2number('８．５万'), 85000)
+    })
+
+    it('should support tiny but integral decimal coefficients like 0.0000000001兆', () => {
+      assert.deepEqual(kanji2number('0.0000000001兆'), 100)
+    })
+
+    it('should reject non-integral results like 0.00009万', () => {
+      assert.throws(() => kanji2number('0.00009万'), TypeError)
+    })
+
+    it('should reject high-precision non-integral results like 1.0000000001万', () => {
+      assert.throws(() => kanji2number('1.0000000001万'), TypeError)
+    })
+
+    it('should reject large-coefficient non-integral results like 10000000.00000001万', () => {
+      assert.throws(() => kanji2number('10000000.00000001万'), TypeError)
     })
   })
 });
